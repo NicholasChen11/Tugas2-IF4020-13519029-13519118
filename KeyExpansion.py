@@ -1,78 +1,77 @@
+from utils import permutate, XOR, leftShift
+
 class KeyExpansion:
   def __init__(self, externalKey):
     self.externalKey = externalKey
     self.totalTurn = 16
-    self.permutedCompressionMatrix = {
+    self.permutedMatrix = {
       1: [
-        57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 
-        10, 2, 59, 51, 43, 35, 27, 19, 11, 3, 60, 52, 44, 36, 
-        63, 55, 47, 39, 31, 23, 15, 7, 62, 54, 46, 38, 30, 22, 
-        14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 28, 20, 12, 4
+        118, 45, 25, 72, 102, 22, 18, 46, 76, 33, 98, 88, 34, 96, 2,
+        35, 106, 24, 50, 56, 63, 121, 51, 103, 53, 57, 58, 37, 64, 90,
+        128, 89, 61, 105, 26, 95, 28, 62, 107, 123, 32, 92, 100, 113, 111,
+        68, 114, 42, 6, 23, 49, 9, 48, 11, 80, 78, 16, 116, 66, 85,
+        39, 93, 77, 59, 120, 86, 5, 30, 17, 19, 119, 36, 47, 15, 99,
+        12, 10, 38, 29, 69, 14, 108, 7, 54, 73, 81, 71, 109, 126, 21,
+        8, 79, 112, 3, 117, 104, 1, 20, 55, 84, 97, 31, 125, 127, 52,
+        82, 41, 4, 91, 13, 87, 94, 75, 40, 65, 101, 110, 124, 43, 67,
+        70, 44, 27, 115, 60, 122, 74, 83
       ],
       2: [
-        14, 17, 11, 24, 1, 5, 3, 28, 15, 6, 21, 10,
-        23, 19, 12, 4, 26, 8, 16, 7, 27, 20, 13, 2,
-        41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48,
-        44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32
+        77, 74, 102, 45, 16, 118, 29, 99, 32, 53, 17, 65, 57, 75, 64,
+        6, 103, 50, 49, 94, 8, 2, 13, 40, 24, 106, 10, 76, 31, 63, 
+        35, 1, 96, 114, 62, 78, 14, 61, 104, 124, 95, 30, 100, 46, 56,
+        39, 97, 70, 82, 93, 47, 18, 15, 66, 122, 126, 123, 125, 34, 27,
+        23, 25, 105, 79, 73, 101, 88, 67, 60, 52, 59, 127, 109, 7, 110,
+        121, 4, 87, 72, 90, 54, 12, 108, 115, 98, 43, 36, 113, 85, 20,
+        68, 44, 112, 38, 21, 69, 26, 33, 117, 19, 91, 111, 84, 41, 120,
+        128, 116, 28, 11, 51, 37, 92, 5, 83, 80, 81, 86, 119, 55, 42,
+        48, 107, 3, 22, 71, 89, 9, 58
       ],
     }
-    self.shiftPerTurn = {
-      1: 1,
-      2: 1,
-      3: 2,
-      4: 2,
-      5: 2,
-      6: 2,
-      7: 2,
-      8: 2,
-      9: 1,
-      10: 2,
-      11: 2,
-      12: 2,
-      13: 2,
-      14: 2,
-      15: 2,
-      16: 1,
-    }
     self.internalKeys = self.expandExternalKey()
+    print("internalKeys:")
     print(self.internalKeys)
+    print("total internalKey: ")
     print(len(self.internalKeys))
+    print("one internalKey length:")
     print(len(self.internalKeys[0]))
 
-  def permutate(self, array, permutedCompressionMatrixNumber):
-    matrix = self.permutedCompressionMatrix[permutedCompressionMatrixNumber]
-    matrixLen = len(matrix)
-    result = []
-
-    for i in range(matrixLen):
-      # there is -1 because index in matrix start from 1, not 0.
-      result.append(array[matrix[i] - 1])
-
-    C = result[:matrixLen//2]
-    D = result[matrixLen//2:]
-
-    return C, D
-
-  def leftShift(self, array, currentTurnNumber):
-    totalShift = self.shiftPerTurn[currentTurnNumber]
-    
-    firstPart = array[:totalShift]
-    secondPart = array[totalShift:]
-
-    return secondPart + firstPart
-
   def expandExternalKey(self):
-    C, D = self.permutate(self.externalKey, 1)
     internalKeys = []
 
-    for currentTurnNumber in range(1, self.totalTurn + 1):
-      C = self.leftShift(C, currentTurnNumber)
-      D = self.leftShift(D, currentTurnNumber)
+    # First Permutation
+    firstPermutation = permutate(self.externalKey, self.permutedMatrix[1])
+    A, B, C, D = firstPermutation[:32], firstPermutation[32:64], firstPermutation[64:96], firstPermutation[96:128]
 
-      firstHalfKey, secondHalfKey = self.permutate(C + D, 2)
-      internalKeys.append(firstHalfKey + secondHalfKey)
+    for currentTurnNumber in range(1, self.totalTurn + 1):
+      # XOR Operations 
+      A = XOR(''.join(A), ''.join(B))
+      B = XOR(''.join(B), ''.join(C))
+      C = XOR(''.join(C), ''.join(D))
+      D = XOR(''.join(D), ''.join(A))
+
+      # Left Shift Operations
+      multiplier = currentTurnNumber % 2
+      A = leftShift(A, 1 * multiplier)
+      B = leftShift(B, 2 * multiplier)
+      C = leftShift(C, 3 * multiplier)
+      D = leftShift(D, 4 * multiplier)
+
+      # Second Permutation
+      internalKey = permutate(A + B + C + D, self.permutedMatrix[2])
+
+      # Add new internal key to array
+      internalKeys.append(internalKey)
+
+      # Left Shift Batch Operation
+      temp = A
+      A = B
+      B = C
+      C = D
+      D = temp
     
     return internalKeys
 
-externalKey = 'abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz123'
-keyExpansion = KeyExpansion(externalKey)
+externalKeyTest = 'abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz123' + \
+  'abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz123'
+keyExpansion = KeyExpansion(externalKeyTest)
