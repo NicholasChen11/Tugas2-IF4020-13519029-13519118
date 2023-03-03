@@ -60,6 +60,11 @@ class KeyExpansion:
       # Second Permutation
       internalKey = permutate(A + B + C + D, self.permutedMatrix[2])
 
+      # XOR firstHalf and secondHalf
+      firstHalf = internalKey[:64]
+      secondHalf = internalKey[64:]
+      internalKey = XOR(''.join(firstHalf), ''.join(secondHalf))
+
       # Add new internal key to array
       internalKeys.append(internalKey)
 
