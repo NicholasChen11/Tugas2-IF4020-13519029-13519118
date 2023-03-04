@@ -29,12 +29,6 @@ class KeyExpansion:
       ],
     }
     self.internalKeys = self.expandExternalKey()
-    print("internalKeys:")
-    print(self.internalKeys)
-    print("total internalKey: ")
-    print(len(self.internalKeys))
-    print("one internalKey length:")
-    print(len(self.internalKeys[0]))
 
   def expandExternalKey(self):
     internalKeys = []
@@ -76,6 +70,14 @@ class KeyExpansion:
       D = temp
     
     return internalKeys
+  
+  def __str__(self):
+    print("internalKeys:")
+    print(self.internalKeys)
+    print("total internalKey: ")
+    print(len(self.internalKeys))
+    print("one internalKey length:")
+    print(len(self.internalKeys[0]))
 
 externalKeyTest = 'abcdefghijklmnop'
 keyExpansion = KeyExpansion(externalKeyTest)
