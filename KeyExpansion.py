@@ -1,8 +1,8 @@
-from utils import permutate, XOR, leftShift
+from utils import stringToBinary, permutate, XOR, leftShift
 
 class KeyExpansion:
   def __init__(self, externalKey):
-    self.externalKey = externalKey
+    self.externalKey = stringToBinary(externalKey)
     self.totalTurn = 16
     self.permutedMatrix = {
       1: [
@@ -45,10 +45,10 @@ class KeyExpansion:
 
     for currentTurnNumber in range(1, self.totalTurn + 1):
       # XOR Operations 
-      A = XOR(''.join(A), ''.join(B))
-      B = XOR(''.join(B), ''.join(C))
-      C = XOR(''.join(C), ''.join(D))
-      D = XOR(''.join(D), ''.join(A))
+      A = XOR(A, B)
+      B = XOR(B, C)
+      C = XOR(C, D)
+      D = XOR(D, A)
 
       # Left Shift Operations
       multiplier = currentTurnNumber % 2
@@ -77,6 +77,5 @@ class KeyExpansion:
     
     return internalKeys
 
-externalKeyTest = 'abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz123' + \
-  'abcdefghijklmnopqrstuvwxyz123456789abcdefghijklmnopqrstuvwxyz123'
+externalKeyTest = 'abcdefghijklmnop'
 keyExpansion = KeyExpansion(externalKeyTest)
