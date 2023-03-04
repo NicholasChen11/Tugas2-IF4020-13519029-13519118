@@ -5,14 +5,25 @@ def stringToBinary(string):
 
   return hex
 
+def binaryToString(bin):
+  return chr(int(bin, 2))
+
 def permutate(string, permutationMatrix):
   result = ''
-
   for i in range(len(permutationMatrix)):
     # there is -1 because index in permutation matrix start from 1, not 0.
     result += string[permutationMatrix[i] - 1]
 
   return result
+
+def inversePermutate(string, permutationMatrix):
+  result = [''] * len(string)
+
+  for i in range(len(permutationMatrix)):
+    # there is -1 because index in permutation matrix start from 1, not 0.
+    result[permutationMatrix[i] - 1] = string[i]
+
+  return ''.join(result)
 
 def XOR(stringA, stringB):
   result = ''
@@ -32,7 +43,7 @@ def leftShift(array, totalShift):
 
   return ''.join(secondPart + firstPart)
 
-def binaryToString(binary):
+def binaryToNumber(binary):
   return int(str(binary), 2)
 
 def numberToBinary(num):

@@ -1,15 +1,7 @@
-from utils import permutate, XOR, binaryToString, numberToBinary
+from utils import permutate, XOR, binaryToNumber, numberToBinary
 
 class FeistelModified:
-  def __init__(self, block_l="", block_r="", key=[]):
-    self.block_l = block_l
-    self.block_r = block_r
-
-    half_key_length = int(len(key) / 2)
-    self.key = key
-    self.left_key = key[:half_key_length]
-    self.right_key = key[half_key_length:len(key)]
-
+  def __init__(self):
     self.expansion_matrix = [
       32, 1, 2, 3, 4, 5,
       4, 5, 6, 7, 8, 9,
@@ -128,8 +120,8 @@ class FeistelModified:
       ]
     }
  
-  def encrypt(self):
-    xor_result = XOR(self.block_r, self.key)
+  def encrypt(self, block, key, length):
+    xor_result = XOR(block, key)
     permutate_result = permutate(xor_result, self.expansion_matrix)
     
     # to convert string of binary into list of binary
@@ -137,10 +129,10 @@ class FeistelModified:
 
     output = ""
     for i, a in enumerate(block_a):
-      row = binaryToString(str(a[0]) + str(a[5]))
-      col = binaryToString(a[1:5])
+      row = binaryToNumber(str(a[0]) + str(a[5]))
+      col = binaryToNumber(a[1:5])
       value = numberToBinary(self.s_box[i][row][col])
-      output += value[-4:]
+      output += value[-length:]
 
     return output
 
@@ -151,10 +143,9 @@ class FeistelModified:
   #     print(dec)
 
 key = ['0010110000111110011101100000111011000101001011111101011011000011', '1101100101110111111101001111001011000111101010011111011010111000', '1100110010010000111011010100001101010110111100010100111111001001', '1110000101111001011110011000110011000001011001010011010110110011', '0011010110001000011101110100001011011001111010101111111000011110', '1100011111001101111010001001100011001010101010010011110001100101', '0001101101010100101100001000101000101001011101101010000000111101', '0000010110101000101000001010101111111001001111011011111110110100', '1001011101110100110111100010110011001101101100001001000110011111', '1011001011010001101000101111101010111001111100111001011011001000', '0111011010110011101000100110010111010110110100100101000101011111', '0111101000001001100110100101011011100001010001010010110001110111', '1000101000100011110000000011100011010010101100011001000111110011', '1001110110111100110101000111001100000001010011011010001111011011', '1110011000100110101101001000001111111010010010100011101010100100', '1011110111010001001110010000111010011001101101001010001101011001']
-left = '11001100000000001100110011111111'
 right = '11110000101010101111000010101010'
 
-f = FeistelModified(left, right, key[0])
-e = f.encrypt()
+f = FeistelModified()
+# e = f.encrypt(4)
 # print(e)
 # d = f.decrypt(e)
