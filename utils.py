@@ -6,7 +6,12 @@ def stringToBinary(string):
   return hex
 
 def binaryToString(bin):
-  return chr(int(bin, 2))
+  str = ''
+  for i in range(0, len(bin), 8):
+    byte = bin[i:i+8]
+    str += chr(int(byte, 2))
+  
+  return str
 
 def permutate(string, permutationMatrix):
   result = ''
@@ -15,15 +20,6 @@ def permutate(string, permutationMatrix):
     result += string[permutationMatrix[i] - 1]
 
   return result
-
-def inversePermutate(string, permutationMatrix):
-  result = [''] * len(string)
-
-  for i in range(len(permutationMatrix)):
-    # there is -1 because index in permutation matrix start from 1, not 0.
-    result[permutationMatrix[i] - 1] = string[i]
-
-  return ''.join(result)
 
 def XOR(stringA, stringB):
   result = ''

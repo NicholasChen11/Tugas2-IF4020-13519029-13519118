@@ -1,4 +1,4 @@
-from utils import permutate, XOR, stringToBinary, binaryToHex, hexToBinary, binaryToString, inversePermutate
+from utils import permutate, XOR, stringToBinary, binaryToHex, hexToBinary, binaryToString
 from KeyExpansion import KeyExpansion
 from FeistelModified import FeistelModified
 
@@ -13,14 +13,6 @@ class DESModified:
       59, 51, 43, 35, 27, 19, 11, 3,
       61, 53, 45, 37, 29, 21, 13, 5,
       63, 55, 47, 39, 31, 23, 15, 7,
-      40, 8, 48, 16, 56, 24, 64, 32,
-      39, 7, 47, 15, 55, 23, 63, 31,
-      38, 6, 46, 14, 54, 22, 62, 30,
-      37, 5, 45, 13, 53, 21, 61, 29,
-      36, 4, 44, 12, 52, 20, 60, 28,
-      35, 3, 43, 11, 51, 19, 59, 27,
-      34, 2, 42, 10, 50, 18, 58, 26,
-      33, 1, 41, 9, 49, 17, 57, 25,
     ]
     
     self.permutate_box = [
@@ -43,26 +35,20 @@ class DESModified:
       35, 3, 43, 11, 51, 19, 59, 27,
       34, 2, 42, 10, 50, 18, 58, 26,
       33, 1, 41, 9, 49, 17, 57, 25,
-      58, 50, 42, 34, 26, 18, 10, 2,
-      60, 52, 44, 36, 28, 20, 12, 4,
-      62, 54, 46, 38, 30, 22, 14, 6,
-      64, 56, 48, 40, 32, 24, 16, 8,
-      57, 49, 41, 33, 25, 17, 9, 1,
-      59, 51, 43, 35, 27, 19, 11, 3,
-      61, 53, 45, 37, 29, 21, 13, 5,
-      63, 55, 47, 39, 31, 23, 15, 7
     ]
 
     self.f = FeistelModified()
 
   def encrypt(self, plaintext, key):
     plaintext = stringToBinary(plaintext)
-    # list_binary = [plaintext[i:i+8] for i in range(0, len(plaintext), 8)]
-    # print(list_binary, "pt")
-    permutate_result = permutate(plaintext, self.ip)
     
-    half_block_length = int(len(permutate_result) / 2)
-    block_l = permutate_result[0:half_block_length]
+    half_block_length = int(len(plaintext) / 2)
+    left_block = plaintext[:half_block_length]
+    right_block = plaintext[half_block_length:]
+    
+    permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
+    
+    block_l = permutate_result[:half_block_length]
     block_r = permutate_result[half_block_length:]
 
     for i in range(16):
@@ -73,50 +59,40 @@ class DESModified:
       temp = block_l
       block_l = block_r
       block_r = XOR(temp, permutated_feistel)
-    
+
     # last permutation to get the result
-    # print(str(block_l) + str(block_r), "ngeng")
-    final_result = permutate((str(block_l) + str(block_r)), self.ip_inverse)
-    # print(final_result)
+    final_result = permutate(block_l, self.ip_inverse) + permutate(block_r, self.ip)
+
     return binaryToHex(final_result)
 
   def decrypt(self, ciphertext, key):
     ciphertext = hexToBinary(ciphertext)
-    # print(ciphertext)
-    permutate_result = inversePermutate(ciphertext, self.ip_inverse)
-    # print(permutate_result, "ngeng")
+
+    half_block_length = int(len(ciphertext) / 2)
+    left_block = ciphertext[:half_block_length]
+    right_block = ciphertext[half_block_length:]
+
+    permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
     
-    half_block_length = int(len(permutate_result) / 2)
-    block_l = permutate_result[0:half_block_length]
+    block_l = permutate_result[:half_block_length]
     block_r = permutate_result[half_block_length:]
 
     for i in range(16):
-      feistel = self.f.encrypt(block_l, key[i], 8)
-      permutated_feistel = inversePermutate(feistel, self.permutate_box)
+      feistel = self.f.encrypt(block_l, key[i], 4)
+      permutated_feistel = permutate(feistel, self.permutate_box)
       
       # temp is used for swapping
       temp = block_r
       block_r = block_l
       block_l = XOR(temp, permutated_feistel)
-      # f.block_r = XOR(temp, permutated_feistel)
     
     # last permutation to get the result
-    # final_result = inversePermutate((str(block_l) + str(block_r)), self.ip)
-
-    # list_binary = [final_result[i:i+8] for i in range(0, len(final_result), 8)]
-    # print(list_binary)
-    # text = ""
-    # for bin in list_binary:
-    #   text += binaryToString(bin)
-
-    # return text
-    return 0
-    # block_a = [permutate_result[i:i+6] for i in range(0, len(permutate_result), 6)]
-    # print(final_result)
-    # return binaryToString(final_result)
+    final_result = permutate(block_l, self.ip_inverse) + permutate(block_r, self.ip)
+    return binaryToString(final_result)
 
 d = DESModified()
 key = KeyExpansion("abcdefghijklmnop").internalKeys
-print(d.encrypt("123456ABCD132536", key))
+e = d.encrypt("123456ABCD132536", key)
+print(e)
 print()
-print(d.decrypt("3F79FCFF5B19504603CB77EE854AFF6B", key))
+print(d.decrypt(e, key[::-1]))
