@@ -47,6 +47,7 @@ class DESModified:
     # permutation is done for both left and right because the size needs to be 128 bits
     permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
 
+    half_block_length = int(len(permutate_result) / 2)
     left_permutate = permutate_result[:half_block_length]
     right_permutate = permutate_result[half_block_length:]
 
