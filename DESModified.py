@@ -39,55 +39,54 @@ class DESModified:
 
     self.f = FeistelModified()
 
-  def encrypt(self, plaintext, key):
-    plaintext = stringToBinary(plaintext)
-    
-    half_block_length = int(len(plaintext) / 2)
-    left_block = plaintext[:half_block_length]
-    right_block = plaintext[half_block_length:]
-    
-    permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
-    
-    block_l = permutate_result[:half_block_length]
-    block_r = permutate_result[half_block_length:]
+  def initialPermutate(self, text):
+    half_block_length = int(len(text) / 2)
+    left_block = text[:half_block_length]
+    right_block = text[half_block_length:]
 
+    # permutation is done for both left and right because the size needs to be 128 bits
+    permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
+
+    left_permutate = permutate_result[:half_block_length]
+    right_permutate = permutate_result[half_block_length:]
+
+    return left_permutate, right_permutate
+
+  def feistelFunction(self, L, R, key):
     for i in range(16):
-      feistel = self.f.encrypt(block_r, key[i], 4)
+      feistel = self.f.encrypt(R, key[i])
       permutated_feistel = permutate(feistel, self.permutate_box)
 
       # temp is used for swapping
-      temp = block_l
-      block_l = block_r
-      block_r = XOR(temp, permutated_feistel)
+      temp = L
+      L = R
+      R = XOR(temp, permutated_feistel)
 
+    return L, R
+
+  def lastPermutate(self, L, R):
+    # done for both left and right because the size needs to be 128 bits also
+    return permutate(L, self.ip_inverse) + permutate(R, self.ip)
+
+  def encrypt(self, plaintext, key):
+    plaintext = stringToBinary(plaintext)
+    block_l, block_r = self.initialPermutate(plaintext)
+
+    block_l, block_r = self.feistelFunction(block_l, block_r, key)
+    
     # last permutation to get the result
-    final_result = permutate(block_l, self.ip_inverse) + permutate(block_r, self.ip)
-
+    final_result = self.lastPermutate(block_l, block_r)
     return binaryToHex(final_result)
 
   def decrypt(self, ciphertext, key):
     ciphertext = hexToBinary(ciphertext)
-
-    half_block_length = int(len(ciphertext) / 2)
-    left_block = ciphertext[:half_block_length]
-    right_block = ciphertext[half_block_length:]
-
-    permutate_result = permutate(left_block, self.ip) + permutate(right_block, self.ip_inverse)
+    block_l, block_r = self.initialPermutate(ciphertext)
     
-    block_l = permutate_result[:half_block_length]
-    block_r = permutate_result[half_block_length:]
-
-    for i in range(16):
-      feistel = self.f.encrypt(block_l, key[i], 4)
-      permutated_feistel = permutate(feistel, self.permutate_box)
-      
-      # temp is used for swapping
-      temp = block_r
-      block_r = block_l
-      block_l = XOR(temp, permutated_feistel)
+    # block_l and block_r is reversed because decrypt is done from bottom to top
+    block_r, block_l = self.feistelFunction(block_r, block_l, key)
     
     # last permutation to get the result
-    final_result = permutate(block_l, self.ip_inverse) + permutate(block_r, self.ip)
+    final_result = self.lastPermutate(block_l, block_r)
     return binaryToString(final_result)
 
 d = DESModified()
