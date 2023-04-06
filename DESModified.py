@@ -1,6 +1,8 @@
 from utils import permutate, XOR, stringToBinary, binaryToHex, hexToBinary, binaryToString
 from KeyExpansion import KeyExpansion
 from FeistelModified import FeistelModified
+import random
+import string
 
 class DESModified:
   def __init__(self):
@@ -38,6 +40,8 @@ class DESModified:
     ]
 
     self.f = FeistelModified()
+    
+    self.padding_length = 0
 
   def initialPermutate(self, text):
     half_block_length = int(len(text) / 2)
@@ -70,29 +74,46 @@ class DESModified:
     return permutate(L, self.ip_inverse) + permutate(R, self.ip)
 
   def encrypt(self, plaintext, key):
-    plaintext = stringToBinary(plaintext)
-    block_l, block_r = self.initialPermutate(plaintext)
+    final_result = ""
+      
+    split_plaintext = [plaintext[i:(i+16)] for i in range(0, len(plaintext), 16)]
+    for pt in split_plaintext:
+      if len(pt) < 16:
+        self.padding_length = 16 - len(pt)
+        padding = ''.join(random.choices(string.ascii_lowercase, k=self.padding_length))
+        pt += padding
 
-    block_l, block_r = self.feistelFunction(block_l, block_r, key)
+      pt = stringToBinary(pt)
+      block_l, block_r = self.initialPermutate(pt)
+
+      block_l, block_r = self.feistelFunction(block_l, block_r, key)
+      
+      # last permutation to get the result
+      final_result += self.lastPermutate(block_l, block_r)
     
-    # last permutation to get the result
-    final_result = self.lastPermutate(block_l, block_r)
     return binaryToHex(final_result)
 
   def decrypt(self, ciphertext, key):
-    ciphertext = hexToBinary(ciphertext)
-    block_l, block_r = self.initialPermutate(ciphertext)
+    final_result = ""
+
+    split_ciphertext = [ciphertext[i:(i+32)] for i in range(0, len(ciphertext), 32)]
+    for ct in split_ciphertext:
+      ct = hexToBinary(ct)
+      block_l, block_r = self.initialPermutate(ct)
+      
+      # block_l and block_r is reversed because decrypt is done from bottom to top
+      block_r, block_l = self.feistelFunction(block_r, block_l, key)
+      
+      # last permutation to get the result
+      final_result += self.lastPermutate(block_l, block_r)
     
-    # block_l and block_r is reversed because decrypt is done from bottom to top
-    block_r, block_l = self.feistelFunction(block_r, block_l, key)
-    
-    # last permutation to get the result
-    final_result = self.lastPermutate(block_l, block_r)
-    return binaryToString(final_result)
+    final_result = binaryToString(final_result)
+    final_result = final_result[:-self.padding_length]
+    return final_result
 
 d = DESModified()
 key = KeyExpansion("abcdefghijklmnop").internalKeys
-e = d.encrypt("123456ABCD132536", key)
+e = d.encrypt("123456ABCD132536123", key)
 print(e)
 print()
 print(d.decrypt(e, key[::-1]))
